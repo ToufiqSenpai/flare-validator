@@ -1,0 +1,14 @@
+{
+  "name": "flare-validator",
+  "version": "1.0.0",
+  "description": "Inspired by Laravel Validator",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "FlareSenpai",
+  "license": "ISC",
+  "devDependencies": {
+    "jest": "^29.5.0"
+  }
+}
