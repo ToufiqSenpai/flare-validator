@@ -1,15 +1,23 @@
 import ValidationRule from "../interfaces/ValidationRule"
-import { RuleValidator, ValidateRulesParam, WildcardObject } from "../types/ValidatorType";
+import { RuleValidation, ValidatorRules } from "../types/ValidatorType";
 import RuleViolation from "./RuleViolation"
 
-class Validator {
-  private ruleValidator: RuleValidator<ValidationRule>
+class Validator<T> {
+  private data: T
 
-  public constructor(ruleValidator: RuleValidator<ValidationRule>) {
+  private rules: ValidatorRules
+
+  private messages: Record<string, string>
+
+  private attributes: Record<string, string>
+
+  private ruleValidator: RuleValidation<ValidationRule>
+
+  public constructor(ruleValidator: RuleValidation<ValidationRule>) {
     this.ruleValidator = ruleValidator
   }
 
-  public async validate<T extends object>(data: T, rules: ValidateRulesParam, message: Record<string, string> = {}, attributes: Record<string, string> = {}): Promise<RuleViolation> {
+  public async validate<T extends object>(data: T, rules: ValidatorRules, message: Record<string, string> = {}, attributes: Record<string, string> = {}): Promise<RuleViolation> {
     
     for(const ruleKey in rules) {
 
@@ -33,12 +41,30 @@ class Validator {
     return flattened;
   }
 
-  private validateDataRule(value: any, ruleAttributes: string | string[]) {
-    if(!Array.isArray(ruleAttributes)) ruleAttributes.split('|')
-
+  private async validateDataRule(value: any, ruleAttributes: Array<string | object>) {
     for(const rule of ruleAttributes) {
-      // const [ruleName, ruleParam] = rule.split(':').splice(1, 1, rule.split(':')[1].split(','))
+      // Check if rule attribute is custom rule class
+      if(typeof rule == 'object' && 'logic' in rule && typeof rule.logic == 'function') {
+
+      } else if(typeof rule == 'string') {
+        const [name, args] = rule.split(':')
+        let ruleInstance: ValidationRule
+
+        // If a rule is not defined, throw an error.
+        if(name in this.ruleValidator) ruleInstance = new this.ruleValidator[name](...args.split(','))
+        else throw new ValidatorException(`Rule ${name} is not defined`)
+
+
+      }
     }
+  }
+
+  private setValidationAwareContract(): ValidationRule {
+
+  }
+
+  public static make() {
+
   }
 }
 
