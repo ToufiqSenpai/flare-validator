@@ -1,68 +1,58 @@
-import ValidationRule from "../interfaces/ValidationRule"
-import { RuleValidator, ValidatorOptions, ValidatorRules } from "../types/ValidatorType";
+import { ConstraintValidatorClass, ConstructorParam } from "../types/ValidatorType"
+import BaseConstraint from "../interfaces/ConstraintValidator"
 import RuleViolation from "./RuleViolation"
+import ConstraintValidatorContext from "./ConstraintValidatorContext"
+import ValidatorException from "../exceptions/ValidatorException"
 
 class Validator<T> {
   private data: T
 
-  private rules: ValidatorRules
+  private rules: Record<string, string>
 
   private messages: Record<string, string>
 
   private attributes: Record<string, string>
 
-  private ruleValidator: RuleValidator<ValidationRule> = {}
+  private constraintsValidator: Record<string, ConstraintValidatorClass> = {}
 
-  public constructor(data: T, rules: Record<string, string>, options: ValidatorOptions) {
+  public constructor({ data, rules, messages, attributes, options }: ConstructorParam<T>) {
     this.data = data
     this.rules = rules
-
+    this.messages = messages
+    this.attributes = attributes
+    this.constraintsValidator = options.constraints
   }
 
-  public async validate<T extends object>(data: T, rules: ValidatorRules, message: Record<string, string> = {}, attributes: Record<string, string> = {}): Promise<RuleViolation> {
+  public async validate(): Promise<RuleViolation> {
     
-    for(const ruleKey in rules) {
-
-    }
   }
 
-  private flattenObject<T>(obj: T, prefix = ''): { [key: string]: any } {
-    const flattened: { [key: string]: any } = {};
-  
-    for (let key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        if (typeof obj[key] === 'object' && obj[key] !== null) {
-          const nestedKeys = this.flattenObject(obj[key], `${prefix}${key}.`);
-          Object.assign(flattened, nestedKeys);
-        } else {
-          flattened[`${prefix}${key}`] = obj[key];
-        }
-      }
-    }
-  
-    return flattened;
+  private parseData(obj: any | any[], prefix = ""): Record<string, any> {
+    return Object.keys(obj).reduce((acc, k) => {
+      const pre = prefix.length ? prefix + '.' : ''
+      if (typeof obj[k] === 'object') Object.assign(acc, this.parseData(obj[k], pre + k))
+      else acc[pre + k] = obj[k]
+      return acc
+    }, {})
   }
+  
+  private async validateValue(value: any, rules: string[]): Promise<string[]> {
+    const messages: string[] = []
 
-  private async validateDataRule(value: any, ruleAttributes: Array<string | object>) {
-    for(const rule of ruleAttributes) {
+    for(const constraint of rules) {
+      const [constraintName, args = ''] = constraint.split(':')
+
       // Check if rule attribute is custom rule class
-      if(typeof rule == 'object' && 'logic' in rule && typeof rule.logic == 'function') {
-
-      } else if(typeof rule == 'string') {
-        const [name, args] = rule.split(':')
-        let ruleInstance: ValidationRule
-
-        // If a rule is not defined, throw an error.
-        if(name in this.ruleValidator) ruleInstance = new this.ruleValidator[name](...args.split(','))
-        else throw new ValidatorException(`Rule ${name} is not defined`)
-
-
+      if(constraintName in this.constraintsValidator) {
+        const constraintInstance = new this.constraintsValidator[constraintName](...args.split(','))
+      
+        if(!await constraintInstance.isValid(new ConstraintValidatorContext(value, ''))) messages.push(constraintInstance.message)
+      } else {
+        throw new TypeError(`Constraint ${constraintName} is not registered.`)
       }
     }
-  }
 
-  private setValidationAwareContract(): ValidationRule {
-
+    return messages
   }
 
   public static make() {

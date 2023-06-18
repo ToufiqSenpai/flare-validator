@@ -1,15 +1,17 @@
-import ValidationRule from "../interfaces/ValidationRule";
+import MessageReplacer from "../interfaces/MessageReplacer";
+import ConstraintValidator from "../interfaces/ConstraintValidator";
 
-export type RuleValidator<T extends ValidationRule> = { [key: string]: new(...args: string[]) => T }
+export type ConstraintValidatorClass = new(...args: string[]) => ConstraintValidator
 
-export type ValidatorRules = { [key: string]: string | Array<string | ValidationRule> }
+export type MessageReplacerValidator = new() => MessageReplacer
 
 export interface ConstructorParam<T> {
   data: T
   rules: Record<string, string>
-  messages: Record<string, string>
-  attributes: Record<string, string>
-  options: {
-    constraints: Record<string, new(...args: string[]) => >
+  messages?: Record<string, string>
+  attributes?: Record<string, string>
+  options?: {
+    constraints?: Record<string, ConstraintValidatorClass>
+    replacers?: Record<string, MessageReplacerValidator>
   }
 }

@@ -5,3 +5,5 @@ class ValidatorException extends Error {
     super.name = 'ValidatorException'
   }
 }
+
+export default ValidatorException
