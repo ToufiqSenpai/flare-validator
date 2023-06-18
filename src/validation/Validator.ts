@@ -1,5 +1,5 @@
 import ValidationRule from "../interfaces/ValidationRule"
-import { RuleValidation, ValidatorRules } from "../types/ValidatorType";
+import { RuleValidator, ValidatorOptions, ValidatorRules } from "../types/ValidatorType";
 import RuleViolation from "./RuleViolation"
 
 class Validator<T> {
@@ -11,10 +11,12 @@ class Validator<T> {
 
   private attributes: Record<string, string>
 
-  private ruleValidator: RuleValidation<ValidationRule>
+  private ruleValidator: RuleValidator<ValidationRule> = {}
 
-  public constructor(ruleValidator: RuleValidation<ValidationRule>) {
-    this.ruleValidator = ruleValidator
+  public constructor(data: T, rules: Record<string, string>, options: ValidatorOptions) {
+    this.data = data
+    this.rules = rules
+
   }
 
   public async validate<T extends object>(data: T, rules: ValidatorRules, message: Record<string, string> = {}, attributes: Record<string, string> = {}): Promise<RuleViolation> {

@@ -1,7 +1,7 @@
 import Validator from "../src/validation/Validator"
 
-const validator = new Validator()
+// const validator = new Validator()
 
-describe('test validateDataRuleMethod', () => {
+describe('test validateDataRule method', () => {
 
 })
