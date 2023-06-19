@@ -2,19 +2,25 @@ import Required from "../src/rule/constraints/Required"
 import Validator from "../src/validation/Validator"
 import { person } from "./utils/data"
 
-const validator = new Validator({
-  data: person,
-  rules: {
-    
-  },
-  options: {
-    constraints: {
-      required: Required
-    }
-  }
+const validatorAttributes = {
+  'address.city': 'City',
+  'address.country': 'Country'
+}
+
+describe('test validate method', () => {
+  test('call method', () => {
+    // validator.validate()
+  })
 })
 
 describe('test parseData method', () => {
+  const validator = new Validator({
+    data: person,
+    rules: {
+      firstName: 'required'
+    }
+  })
+  
   test('flatten object and array with data person', () => {
     const flattenPerson = {
       firstName: "John",
@@ -69,18 +75,31 @@ describe('test parseData method', () => {
 })
 
 describe('test validateValue method', () =>  {
+  const validator = new Validator({
+    data: person,
+    rules: {
+      firstName: 'required'
+    },
+    options: {
+      constraints: {
+        required: Required
+      }
+    },
+    attributes: validatorAttributes
+  })
+
   it('should return 0 messages (success)', async() => {
-    const validateValue = await validator['validateValue']('John Doe', ['required'])
+    const validateValue = await validator['validateValue']('Manhattan', 'address.city', ['required'])
     expect(validateValue.length).toEqual(0)
   })
 
   it('should return messages (failed)', async() => {
-    const validateValue = await validator['validateValue'](null, ['required'])
+    const validateValue = await validator['validateValue'](null, 'address.city', ['required'])
     expect(validateValue.length).toBeGreaterThan(0)
   })
 
   it('throw TypeError when constraint is not registered', () => {
-    expect(async () => await validator['validateValue']('John Doe', ['asd'])).rejects.toThrow(TypeError)
-    expect(async () => await validator['validateValue']('John Doe', ['asd'])).rejects.toThrow('Constraint asd is not registered.')
+    expect(async () => await validator['validateValue']('Manhattan', 'address.city', ['asd'])).rejects.toThrow(TypeError)
+    expect(async () => await validator['validateValue']('Manhattan', 'address.city', ['asd'])).rejects.toThrow('Constraint asd is not registered.')
   })
 })
