@@ -1,13 +1,12 @@
 import { ConstraintValidatorClass, ConstructorParam } from "../types/ValidatorType"
-import BaseConstraint from "../interfaces/ConstraintValidator"
 import RuleViolation from "./RuleViolation"
 import ConstraintValidatorContext from "./ConstraintValidatorContext"
-import ValidatorException from "../exceptions/ValidatorException"
-import getObjectByPath from "../utils/getObjectByPath"
-import MessageReplacer from "../interfaces/MessageReplacer"
+import Required from "../constraints/Required"
+import MinLength from "../constraints/MinLength"
+import MaxLength from "../constraints/MaxLength"
 
-class Validator<T> {
-  private data: Record<string, any>
+class Validator {
+  private data: any
 
   private rules: Record<string, string>
 
@@ -15,29 +14,32 @@ class Validator<T> {
 
   private attributes: Record<string, string>
 
-  private constraintValidators: Record<string, ConstraintValidatorClass> = {}
+  private constraints: Record<string, ConstraintValidatorClass>
 
-  private messageReplacer: Record<string, MessageReplacer> = {}
+  private parsedData: Record<string, any>
 
-  private errorMessages: Record<string, string[]> = {}
-
-  public constructor({ data, rules, messages = {}, attributes = {}, options = {} }: ConstructorParam<T>) {
-    this.data = this.parseData(data)
+  public constructor({ data, rules, messages = {}, attributes = {}, constraints = {} }: ConstructorParam) {
+    this.data = data
     this.rules = rules
     this.messages = messages
     this.attributes = attributes
-    
-    options.constraints ? this.constraintValidators = options.constraints : null
+    this.constraints = constraints
+    this.parsedData = this.parseData(data)
   }
 
   public async validate(): Promise<RuleViolation> {
-    for(const dataAttribute in this.data) {
-      const replacedAttribute = dataAttribute.replace(/\.\d+\./g, ".*.")
-      
+    const errorMessages: Record<string, string[]> = {}
+
+    for(const dataAttribute in this.parsedData) {
+      const replacedAttribute = this.replaceWildcard(dataAttribute)
+
       if(replacedAttribute in this.rules) {
-        this.errorMessages[dataAttribute] = await this.validateValue(this.data[dataAttribute], dataAttribute, this.rules[replacedAttribute].split('|'))
+        const violationMessages = await this.validateValue(dataAttribute, this.parsedData[dataAttribute], this.rules[replacedAttribute].split('|'))
+        violationMessages.length > 0 ? errorMessages[dataAttribute] = violationMessages : null
       }
     }
+
+    return new RuleViolation(errorMessages)
   }
 
   private parseData(obj: any | any[], prefix = ""): Record<string, any> {
@@ -51,17 +53,27 @@ class Validator<T> {
     }, {})
   }
   
-  private async validateValue(value: any, rawAttribute: string, rules: string[]): Promise<string[]> {
+  private async validateValue(attribute: string, value: any, rules: string[]): Promise<string[]> {
     const messages: string[] = []
 
     for(const constraint of rules) {
-      const [constraintName, args = ''] = constraint.split(':')
+      const [constraintName, args] = this.ruleParser(constraint)
 
       // Check if rule attribute is custom rule class
-      if(constraintName in this.constraintValidators) {
-        const constraintInstance = new this.constraintValidators[constraintName](...args.split(','))
-      
-        !await constraintInstance.isValid(new ConstraintValidatorContext(this.data, value, rawAttribute, this.attributes[rawAttribute])) && messages.push(constraintInstance.message)
+      if(constraintName in this.constraints) {
+        const constraintInstance = new this.constraints[constraintName](...args)
+        constraintInstance.context = new ConstraintValidatorContext(this.data, value, this.getCustomAttribute(attribute))
+       
+        if(!await constraintInstance.isValid()) {
+          const violationMessage = this.messagePlaceholderReplacer(
+            this.messages[`${attribute}.${constraintName}`] || constraintInstance.message(),
+            this.getCustomAttribute(attribute),
+            value,
+            args
+          ) 
+
+          messages.push(violationMessage)
+        }
       } else {
         throw new TypeError(`Constraint ${constraintName} is not registered.`)
       }
@@ -69,13 +81,49 @@ class Validator<T> {
 
     return messages
   }
-
-  private getCustomAttribute(rawAttribute: string): string {
-    return 
+  
+  private ruleParser(rule: string): [string, string[]] {
+    const splittedRule = rule.split(':')
+    return [splittedRule[0], splittedRule[1]?.split(',') || []]
   }
 
-  public static make() {
+  /**
+   * Replace index attribute to wildcard asterisk. 
+   * 
+   * Example from "books.0.name" to "books.*.name"
+   * 
+   * @param {string} attribute 
+   * @returns {string}
+   */
+  private replaceWildcard(attribute: string): string {
+    return attribute.replace(/\.\d+\./g, ".*.")
+  }
 
+  private getCustomAttribute(rawAttribute: string): string {
+    return this.attributes[this.replaceWildcard(rawAttribute)] || rawAttribute
+  }
+
+  private messagePlaceholderReplacer(message: string, attribute: string, value: any, ruleArgs: string[]) {
+    return message
+      .replace(/:attribute/g, attribute)
+      .replace(/:value/g, value?.toString() || '')
+      .replace(/:arg(\d+)/g, (match, p1) => ruleArgs[parseInt(p1) - 1])
+  }
+
+  public static make(data: any, rules: Record<string, string>, messages: Record<string, string> = {}, attributes: Record<string, string> = {}): Validator {
+    const validator = new Validator({
+      data,
+      rules,
+      messages,
+      attributes,
+      constraints: {
+        required: Required,
+        min_length: MinLength,
+        max_length: MaxLength
+      }
+    })
+
+    return validator
   }
 }
 

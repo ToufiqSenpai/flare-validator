@@ -1,8 +1,9 @@
 import ConstraintValidatorContext from "../validation/ConstraintValidatorContext"
 
 interface ConstraintValidator {
-  message: string
-  isValid(context: ConstraintValidatorContext): boolean | Promise<boolean>
+  context: ConstraintValidatorContext
+  message(): string
+  isValid(): boolean | Promise<boolean>
 }
 
 export default ConstraintValidator

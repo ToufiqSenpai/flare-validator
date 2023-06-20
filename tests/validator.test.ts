@@ -1,10 +1,14 @@
-import Required from "../src/rule/constraints/Required"
+import Required from "../src/constraints/Required"
 import Validator from "../src/validation/Validator"
 import { person } from "./utils/data"
 
 const validatorAttributes = {
+  firstName: 'First Name',
+  lastName: 'Last Name',
   'address.city': 'City',
-  'address.country': 'Country'
+  'address.country': 'Country',
+  'books.*.name': 'Book Name',
+  'books.*.author': 'Book Author'
 }
 
 describe('test validate method', () => {
@@ -33,7 +37,6 @@ describe('test parseData method', () => {
       'books.1.author': "Yae",
     }
     const flattenObjectValidator = validator['parseData'](person)
-    console.log(flattenObjectValidator)
 
     expect(Object.keys(flattenObjectValidator)).toEqual(Object.keys(flattenPerson))
   })
@@ -68,7 +71,6 @@ describe('test parseData method', () => {
       "k": 9
     }
     const flattenObjectValidator = validator['parseData'](obj)
-    console.log(flattenObjectValidator)
 
     expect(Object.keys(flattenObjectValidator)).toEqual(Object.keys(flattenObj))
   })
@@ -80,12 +82,10 @@ describe('test validateValue method', () =>  {
     rules: {
       firstName: 'required'
     },
-    options: {
-      constraints: {
-        required: Required
-      }
-    },
-    attributes: validatorAttributes
+    attributes: validatorAttributes,
+    constraints: {
+      required: Required
+    }
   })
 
   it('should return 0 messages (success)', async() => {
@@ -94,12 +94,31 @@ describe('test validateValue method', () =>  {
   })
 
   it('should return messages (failed)', async() => {
-    const validateValue = await validator['validateValue'](null, 'address.city', ['required'])
+    const validateValue = await validator['validateValue']('address.city', null, ['required'])
     expect(validateValue.length).toBeGreaterThan(0)
   })
 
   it('throw TypeError when constraint is not registered', () => {
     expect(async () => await validator['validateValue']('Manhattan', 'address.city', ['asd'])).rejects.toThrow(TypeError)
     expect(async () => await validator['validateValue']('Manhattan', 'address.city', ['asd'])).rejects.toThrow('Constraint asd is not registered.')
+  })
+})
+
+describe('test messagePlaceholderReplacer method', () => {
+  const validator = new Validator({
+    data: person,
+    rules: {
+      firstName: 'required'
+    }
+  })
+
+  test('replace string', () => {
+    const args = ['foo', 'bar', 'baz']
+    expect(validator['messagePlaceholderReplacer'](
+      ':attribute :value :arg1 :arg2 :arg3',
+      'City',
+      'Manhattan',
+      args
+      )).toEqual('City Manhattan foo bar baz')
   })
 })

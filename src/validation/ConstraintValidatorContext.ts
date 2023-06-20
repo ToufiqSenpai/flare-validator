@@ -1,24 +1,21 @@
 import getObjectByPath from "../utils/getObjectByPath"
 
 class ConstraintValidatorContext {
-  private data: Record<string | number, any>
+  private data: any
 
   private value: any
 
   private attribute: string
 
-  private rawAttribute: string
-
-  constructor(data: Record<string | number, any>, value: any, attribute: string, rawAttribute: string) {
+  constructor(data: any, value: any, attribute: string) {
     this.data = data
     this.value = value
-    this.attribute = attribute ? attribute : rawAttribute
-    this.rawAttribute = rawAttribute
+    this.attribute = attribute 
   }
 
   /**
    * Return the data attribute.
-   * If custom attribute for the data attribute is undefined, it will return raw attribute.
+   * If custom attribute for the data attribute is undefined, it will return path attribute.
    * 
    * @returns {string}
    */
@@ -27,18 +24,20 @@ class ConstraintValidatorContext {
   }
 
   /**
-   * Return data raw attribute. Example "address.city"
+   * Return data being validated
    * 
-   * @returns {string}
+   * @param path 
+   * @returns 
    */
-  public getRawAttribute(): string {
-    return this.rawAttribute
-  }
-
   public getData(path: string = ''): any {
     return getObjectByPath(this.data, path)
   }
 
+  /**
+   * Return value being validated
+   * 
+   * @returns 
+   */
   public getValue(): any {
     return this.value
   }

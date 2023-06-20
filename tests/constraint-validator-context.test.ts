@@ -1,14 +1,10 @@
 import ConstraintValidatorContext from "../src/validation/ConstraintValidatorContext";
 import { person } from "./utils/data";
 
-const constraintValidatorContext = new ConstraintValidatorContext(person, 'John Doe', 'City', 'address.city')
+const constraintValidatorContext = new ConstraintValidatorContext(person, 'John Doe', 'City')
 
 test('getAttribute method', () => {
   expect(constraintValidatorContext.getAttribute()).toEqual('City')
-})
-
-test('getRawAttribute method', () => {
-  expect(constraintValidatorContext.getRawAttribute()).toEqual('address.city')
 })
 
 test('getValue method', () => {
