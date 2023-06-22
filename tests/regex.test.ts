@@ -4,3 +4,14 @@ test('replace number between dot symbol to asterisk symbol', () => {
 
   expect(replacedString).toEqual(".*. Hello .*. World .*.")
 })
+
+test('replace asterisk to number regex', () => {
+  function createRegex(str: string) {
+    const escapedStr = str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regexStr = escapedStr.replace(/\\\*/g, '\\d+') + '$';
+    return new RegExp(regexStr);
+  }
+  
+  const regex1 = createRegex("address.city");
+  expect(regex1.test('address.city')).toBeTruthy() // Output true
+})

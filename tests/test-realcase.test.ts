@@ -12,6 +12,6 @@ describe('Test register user validation', () => {
       email: 'required',
       password: 'required|min_length:6|max_length:20'
     })
-    console.log((await validator.validate()).getListMessages())
+    console.log((await validator.validate()).getMessageList())
   })
 })

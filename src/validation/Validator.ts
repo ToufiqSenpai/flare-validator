@@ -30,14 +30,26 @@ class Validator {
   public async validate(): Promise<RuleViolation> {
     const errorMessages: Record<string, string[]> = {}
 
-    for(const dataAttribute in this.parsedData) {
-      const replacedAttribute = this.replaceWildcard(dataAttribute)
+    // for(const dataAttribute in this.parsedData) {
+    //   const replacedAttribute = this.replaceWildcard(dataAttribute)
 
-      if(replacedAttribute in this.rules) {
-        const violationMessages = await this.validateValue(dataAttribute, this.parsedData[dataAttribute], this.rules[replacedAttribute].split('|'))
+    //   if(replacedAttribute in this.rules) {
+    //     const violationMessages = await this.validateValue(dataAttribute, this.parsedData[dataAttribute], this.rules[replacedAttribute].split('|'))
+    //     violationMessages.length > 0 ? errorMessages[dataAttribute] = violationMessages : null
+    //   }
+    // }
+    for (const ruleAttribute in this.rules) {
+      const dataAttributes = Object.keys(this.parsedData).filter(key => this.wildcardRegex(ruleAttribute).test(key))
+      
+      for(const dataAttribute of dataAttributes) {
+        if(dataAttribute in errorMessages) break
+
+        const violationMessages = await this.validateValue(dataAttribute, this.parsedData[dataAttribute], this.rules[ruleAttribute].split('|'))
         violationMessages.length > 0 ? errorMessages[dataAttribute] = violationMessages : null
       }
     }
+
+    console.log(errorMessages)
 
     return new RuleViolation(errorMessages)
   }
@@ -52,25 +64,25 @@ class Validator {
       return acc
     }, {})
   }
-  
+
   private async validateValue(attribute: string, value: any, rules: string[]): Promise<string[]> {
     const messages: string[] = []
 
-    for(const constraint of rules) {
+    for (const constraint of rules) {
       const [constraintName, args] = this.ruleParser(constraint)
 
       // Check if rule attribute is custom rule class
-      if(constraintName in this.constraints) {
+      if (constraintName in this.constraints) {
         const constraintInstance = new this.constraints[constraintName](...args)
         constraintInstance.context = new ConstraintValidatorContext(this.data, value, this.getCustomAttribute(attribute))
-       
-        if(!await constraintInstance.isValid()) {
+
+        if (!await constraintInstance.isValid()) {
           const violationMessage = this.messagePlaceholderReplacer(
             this.messages[`${attribute}.${constraintName}`] || constraintInstance.message(),
             this.getCustomAttribute(attribute),
             value,
             args
-          ) 
+          )
 
           messages.push(violationMessage)
         }
@@ -81,26 +93,26 @@ class Validator {
 
     return messages
   }
-  
+
   private ruleParser(rule: string): [string, string[]] {
     const splittedRule = rule.split(':')
     return [splittedRule[0], splittedRule[1]?.split(',') || []]
   }
 
   /**
-   * Replace index attribute to wildcard asterisk. 
+   * Replace number or index attribute to wildcard asterisk. 
    * 
    * Example from "books.0.name" to "books.*.name"
    * 
    * @param {string} attribute 
    * @returns {string}
    */
-  private replaceWildcard(attribute: string): string {
+  private replaceIndexToWildcard(attribute: string): string {
     return attribute.replace(/\.\d+\./g, ".*.")
   }
 
   private getCustomAttribute(rawAttribute: string): string {
-    return this.attributes[this.replaceWildcard(rawAttribute)] || rawAttribute
+    return this.attributes[this.replaceIndexToWildcard(rawAttribute)] || rawAttribute
   }
 
   private messagePlaceholderReplacer(message: string, attribute: string, value: any, ruleArgs: string[]) {
@@ -108,6 +120,13 @@ class Validator {
       .replace(/:attribute/g, attribute)
       .replace(/:value/g, value?.toString() || '')
       .replace(/:arg(\d+)/g, (match, p1) => ruleArgs[parseInt(p1) - 1])
+  }
+
+  private wildcardRegex(attribute: string): RegExp {
+    return new RegExp(
+      attribute.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/\\\*/g, '\\d+') + '$'
+    )
   }
 
   public static make(data: any, rules: Record<string, string>, messages: Record<string, string> = {}, attributes: Record<string, string> = {}): Validator {

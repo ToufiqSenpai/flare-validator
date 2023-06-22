@@ -9,7 +9,7 @@ class RuleViolation {
     return Object.keys(this.violationMessages).length == 0
   }
 
-  public getListMessages(): Record<string, string[]> {
+  public getMessageList(): Record<string, string[]> {
     return this.violationMessages
   }
 
