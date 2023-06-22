@@ -15,7 +15,7 @@ class MaxLength implements ConstraintValidator {
   }
   
   public isValid(): boolean | Promise<boolean> {
-    return this.context.getValue().length <= this.maxLength
+    return this.context.getValue()?.length <= this.maxLength
   }
 }
 

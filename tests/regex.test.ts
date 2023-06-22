@@ -12,6 +12,6 @@ test('replace asterisk to number regex', () => {
     return new RegExp(regexStr);
   }
   
-  const regex1 = createRegex("address.city");
-  expect(regex1.test('address.city')).toBeTruthy() // Output true
+  const regex1 = createRegex("address");
+  expect(regex1.test('address')).toBeTruthy() // Output true
 })

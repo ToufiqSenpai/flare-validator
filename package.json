@@ -2,7 +2,7 @@
   "name": "flare-validator",
   "version": "1.0.0",
   "description": "Inspired by Laravel Validator",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
     "test": "test"
   },

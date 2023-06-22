@@ -6,16 +6,34 @@ import MinLength from "../constraints/MinLength"
 import MaxLength from "../constraints/MaxLength"
 
 class Validator {
+  /**
+   * Raw data to validate
+   */
   private data: any
 
+  /**
+   * The rules of validation
+   */
   private rules: Record<string, string>
 
+  /**
+   * Custom messages for validation if not valid
+   */
   private messages: Record<string, string>
 
+  /**
+   * Custom attributes
+   */
   private attributes: Record<string, string>
 
+  /**
+   * The constraints for validation
+   */
   private constraints: Record<string, ConstraintValidatorClass>
 
+  /**
+   * Flatened data to validate
+   */
   private parsedData: Record<string, any>
 
   public constructor({ data, rules, messages = {}, attributes = {}, constraints = {} }: ConstructorParam) {
@@ -38,18 +56,37 @@ class Validator {
     //     violationMessages.length > 0 ? errorMessages[dataAttribute] = violationMessages : null
     //   }
     // }
-    for (const ruleAttribute in this.rules) {
-      const dataAttributes = Object.keys(this.parsedData).filter(key => this.wildcardRegex(ruleAttribute).test(key))
-      
-      for(const dataAttribute of dataAttributes) {
-        if(dataAttribute in errorMessages) break
 
-        const violationMessages = await this.validateValue(dataAttribute, this.parsedData[dataAttribute], this.rules[ruleAttribute].split('|'))
-        violationMessages.length > 0 ? errorMessages[dataAttribute] = violationMessages : null
+    //
+    // for (const ruleAttribute in this.rules) {
+    //   const dataAttributes = Object.keys(this.parsedData).filter(key => this.wildcardRegex(ruleAttribute).test(key))
+    //   console.log(dataAttributes)
+      
+    //   for(const dataAttribute of dataAttributes) {
+    //     if(dataAttribute in errorMessages) break
+
+    //     const violationMessages = await this.validateValue(dataAttribute, this.parsedData[dataAttribute], this.rules[ruleAttribute].split('|'))
+    //     violationMessages.length > 0 ? errorMessages[dataAttribute] = violationMessages : null
+    //   }
+    // }
+
+    // console.log(errorMessages)
+
+    for(const ruleKey in this.rules) {
+      if(ruleKey.match(/\.\*\./g)) {
+        const dataKeys = Object.keys(this.parsedData).filter(key => this.wildcardRegex(ruleKey).test(key))
+        
+        for(const dataKey of dataKeys) {
+          if(dataKey in errorMessages) break
+
+          const violationMessages = await this.validateValue(dataKey, this.parsedData[dataKey], this.rules[ruleKey].split('|'))
+          violationMessages.length > 0 ? errorMessages[dataKey] = violationMessages : null
+        }
+      } else {
+        const violationMessage = await this.validateValue(ruleKey, this.parsedData[ruleKey], this.rules[ruleKey].split('|'))
+        violationMessage.length > 0 ? errorMessages[ruleKey] = violationMessage : null
       }
     }
-
-    console.log(errorMessages)
 
     return new RuleViolation(errorMessages)
   }

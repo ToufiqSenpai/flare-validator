@@ -15,7 +15,7 @@ class MinLength implements ConstraintValidator {
   }
   
   public isValid(): boolean | Promise<boolean> {
-    return this.context.getValue().length >= this.minLength
+    return this.context.getValue()?.length >= this.minLength
   }
 }
 
