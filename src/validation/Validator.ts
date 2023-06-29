@@ -1,90 +1,68 @@
-import { ConstraintValidatorClass, ConstructorParam } from "../types/ValidatorType"
+import { RuleValidatorClass, ParsedRule } from "../types/ValidatorType"
 import RuleViolation from "./RuleViolation"
-import ConstraintValidatorContext from "./ConstraintValidatorContext"
-import Required from "../constraints/Required"
-import MinLength from "../constraints/MinLength"
-import MaxLength from "../constraints/MaxLength"
+import ConstraintValidatorContext from "./RuleValidatorContext"
+import Required from "../rules/Required"
+import MinLength from "../rules/MinLength"
+import MaxLength from "../rules/MaxLength"
+import Min from "../rules/Min"
+import Max from "../rules/Max"
 
 class Validator {
   /**
-   * Raw data to validate
-   */
-  private data: any
-
-  /**
-   * The rules of validation
-   */
-  private rules: Record<string, string>
-
-  /**
-   * Custom messages for validation if not valid
-   */
-  private messages: Record<string, string>
-
-  /**
-   * Custom attributes
-   */
-  private attributes: Record<string, string>
-
-  /**
    * The constraints for validation
    */
-  private constraints: Record<string, ConstraintValidatorClass>
+  private ruleValidators: Record<string, RuleValidatorClass>
 
-  /**
-   * Flatened data to validate
-   */
-  private parsedData: Record<string, any>
-
-  public constructor({ data, rules, messages = {}, attributes = {}, constraints = {} }: ConstructorParam) {
-    this.data = data
-    this.rules = rules
-    this.messages = messages
-    this.attributes = attributes
-    this.constraints = constraints
-    this.parsedData = this.parseData(data)
+  public constructor(ruleValidators: Record<string, RuleValidatorClass> = {}) {
+    this.ruleValidators = ruleValidators
   }
 
-  public async validate(): Promise<RuleViolation> {
+  /**
+   * 
+   * @param data Data to validate
+   * @param rules Rules for validating
+   * @param messages Custom message violation
+   * @param attributes Custom attribute
+   * @returns 
+   */
+  public async validate(data: any, rules: Record<string, string>, messages: Record<string, string> = {}, attributes: Record<string, string> = {}): Promise<RuleViolation> {
     const errorMessages: Record<string, string[]> = {}
+    const parsedData = this.parseData(data)
+    const parsedRules = this.parseRule(rules)
 
-    // for(const dataAttribute in this.parsedData) {
-    //   const replacedAttribute = this.replaceWildcard(dataAttribute)
+    for (const ruleAttribute in rules) {
+      let dataAttributes: string[] // Data attribute that must be validated
 
-    //   if(replacedAttribute in this.rules) {
-    //     const violationMessages = await this.validateValue(dataAttribute, this.parsedData[dataAttribute], this.rules[replacedAttribute].split('|'))
-    //     violationMessages.length > 0 ? errorMessages[dataAttribute] = violationMessages : null
-    //   }
-    // }
-
-    //
-    // for (const ruleAttribute in this.rules) {
-    //   const dataAttributes = Object.keys(this.parsedData).filter(key => this.wildcardRegex(ruleAttribute).test(key))
-    //   console.log(dataAttributes)
-      
-    //   for(const dataAttribute of dataAttributes) {
-    //     if(dataAttribute in errorMessages) break
-
-    //     const violationMessages = await this.validateValue(dataAttribute, this.parsedData[dataAttribute], this.rules[ruleAttribute].split('|'))
-    //     violationMessages.length > 0 ? errorMessages[dataAttribute] = violationMessages : null
-    //   }
-    // }
-
-    // console.log(errorMessages)
-
-    for(const ruleKey in this.rules) {
-      if(ruleKey.match(/\.\*\./g)) {
-        const dataKeys = Object.keys(this.parsedData).filter(key => this.wildcardRegex(ruleKey).test(key))
-        
-        for(const dataKey of dataKeys) {
-          if(dataKey in errorMessages) break
-
-          const violationMessages = await this.validateValue(dataKey, this.parsedData[dataKey], this.rules[ruleKey].split('|'))
-          violationMessages.length > 0 ? errorMessages[dataKey] = violationMessages : null
-        }
+      if (ruleAttribute.match(/\.\*\./g)) {
+        dataAttributes = Object.keys(parsedData).filter(key => this.wildcardRegex(ruleAttribute).test(key))
       } else {
-        const violationMessage = await this.validateValue(ruleKey, this.parsedData[ruleKey], this.rules[ruleKey].split('|'))
-        violationMessage.length > 0 ? errorMessages[ruleKey] = violationMessage : null
+        dataAttributes = [ruleAttribute]
+      }
+
+      for (const dataAttribute of dataAttributes) {
+        if (dataAttribute in errorMessages) break
+
+        const violationMessage: string[] = []
+
+        for (const { ruleName, args } of parsedRules[ruleAttribute]) {
+          if (!(ruleName in this.ruleValidators)) throw new TypeError(`Rule ${ruleName} is not registered.`)
+
+          const ruleInstance = new this.ruleValidators[ruleName](...args)
+          ruleInstance.context = new ConstraintValidatorContext(data, parsedData[dataAttribute], this.getCustomAttribute(dataAttribute, attributes))
+
+          if (!await ruleInstance.isValid()) {
+            const customMessageKey = this.replaceIndexToWildcard(dataAttribute)
+            // console.log(/\./g.test(customMessageKey) ? `${customMessageKey}.${ruleName}` : ruleName)
+            violationMessage.push(this.messagePlaceholderReplacer(
+              messages[customMessageKey.includes('.') ? `${customMessageKey}.${ruleName}` : ruleName] || ruleInstance.message(),
+              this.getCustomAttribute(dataAttribute, attributes),
+              parsedData[dataAttribute],
+              args
+            ))
+          }
+        }
+
+        if (violationMessage.length > 0) errorMessages[dataAttribute] = violationMessage
       }
     }
 
@@ -102,38 +80,22 @@ class Validator {
     }, {})
   }
 
-  private async validateValue(attribute: string, value: any, rules: string[]): Promise<string[]> {
-    const messages: string[] = []
+  private parseRule(ruleData: Record<string, string>): Record<string, ParsedRule[]> {
+    const parsedRule: Record<string, ParsedRule[]> = {}
 
-    for (const constraint of rules) {
-      const [constraintName, args] = this.ruleParser(constraint)
+    for (const ruleProperty in ruleData) {
+      const rules: ParsedRule[] = [] // Parse "range:5,10"
 
-      // Check if rule attribute is custom rule class
-      if (constraintName in this.constraints) {
-        const constraintInstance = new this.constraints[constraintName](...args)
-        constraintInstance.context = new ConstraintValidatorContext(this.data, value, this.getCustomAttribute(attribute))
+      for (const rule of ruleData[ruleProperty].split('|')) {
+        const [ruleName, args] = rule.split(':')
 
-        if (!await constraintInstance.isValid()) {
-          const violationMessage = this.messagePlaceholderReplacer(
-            this.messages[`${attribute}.${constraintName}`] || constraintInstance.message(),
-            this.getCustomAttribute(attribute),
-            value,
-            args
-          )
-
-          messages.push(violationMessage)
-        }
-      } else {
-        throw new TypeError(`Constraint ${constraintName} is not registered.`)
+        rules.push({ ruleName, args: args?.split(',') || [] })
       }
+
+      parsedRule[ruleProperty] = rules
     }
 
-    return messages
-  }
-
-  private ruleParser(rule: string): [string, string[]] {
-    const splittedRule = rule.split(':')
-    return [splittedRule[0], splittedRule[1]?.split(',') || []]
+    return parsedRule
   }
 
   /**
@@ -148,8 +110,8 @@ class Validator {
     return attribute.replace(/\.\d+\./g, ".*.")
   }
 
-  private getCustomAttribute(rawAttribute: string): string {
-    return this.attributes[this.replaceIndexToWildcard(rawAttribute)] || rawAttribute
+  private getCustomAttribute(rawAttribute: string, customAttribute: Record<string, string>): string {
+    return customAttribute[this.replaceIndexToWildcard(rawAttribute)] || rawAttribute
   }
 
   private messagePlaceholderReplacer(message: string, attribute: string, value: any, ruleArgs: string[]) {
@@ -166,20 +128,20 @@ class Validator {
     )
   }
 
-  public static make(data: any, rules: Record<string, string>, messages: Record<string, string> = {}, attributes: Record<string, string> = {}): Validator {
-    const validator = new Validator({
-      data,
-      rules,
-      messages,
-      attributes,
-      constraints: {
-        required: Required,
-        min_length: MinLength,
-        max_length: MaxLength
-      }
-    })
+  private static validatorInstance: Validator
 
-    return validator
+  public static getValidator(): Validator {
+    if (!this.validatorInstance) {
+      this.validatorInstance = new Validator({
+        min: Min,
+        max: Max,
+        min_length: MinLength,
+        max_length: MaxLength,
+        required: Required
+      })
+    }
+
+    return this.validatorInstance
   }
 }
 

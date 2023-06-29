@@ -1,8 +1,8 @@
-import ConstraintValidator from "../interfaces/ConstraintValidator";
-import ConstraintValidatorContext from "../validation/ConstraintValidatorContext";
+import RuleValidator from "../interfaces/RuleValidator";
+import RuleValidatorContext from "../validation/RuleValidatorContext";
 
-class Max implements ConstraintValidator {
-  public context: ConstraintValidatorContext
+class Max implements RuleValidator {
+  public context: RuleValidatorContext
 
   private max: string
 

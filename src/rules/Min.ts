@@ -1,8 +1,8 @@
-import ConstraintValidator from "../interfaces/ConstraintValidator";
-import ConstraintValidatorContext from "../validation/ConstraintValidatorContext";
+import RuleValidator from "../interfaces/RuleValidator";
+import RuleValidatorContext from "../validation/RuleValidatorContext";
 
-class Min implements ConstraintValidator {
-  public context: ConstraintValidatorContext
+class Min implements RuleValidator {
+  public context: RuleValidatorContext
 
   private min: string
 

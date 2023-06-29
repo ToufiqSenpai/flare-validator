@@ -1,4 +1,4 @@
-import ConstraintValidatorContext from "../src/validation/ConstraintValidatorContext";
+import ConstraintValidatorContext from "../src/validation/RuleValidatorContext";
 import { person } from "./utils/data";
 
 const constraintValidatorContext = new ConstraintValidatorContext(person, 'John Doe', 'City')

@@ -1,6 +1,6 @@
 import getObjectByPath from "../utils/getObjectByPath"
 
-class ConstraintValidatorContext {
+class RuleValidatorContext {
   private data: any
 
   private value: any
@@ -43,4 +43,4 @@ class ConstraintValidatorContext {
   }
 }
 
-export default ConstraintValidatorContext
+export default RuleValidatorContext
