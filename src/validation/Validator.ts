@@ -42,7 +42,7 @@ class Validator {
       for (const dataAttribute of dataAttributes) {
         if (dataAttribute in errorMessages) break
 
-        const violationMessage: string[] = []
+        const violationMessages: string[] = []
 
         for (const { ruleName, args } of parsedRules[ruleAttribute]) {
           if (!(ruleName in this.ruleValidators)) throw new TypeError(`Rule ${ruleName} is not registered.`)
@@ -51,10 +51,21 @@ class Validator {
           ruleInstance.context = new ConstraintValidatorContext(data, parsedData[dataAttribute], this.getCustomAttribute(dataAttribute, attributes))
 
           if (!await ruleInstance.isValid()) {
-            const customMessageKey = this.replaceIndexToWildcard(dataAttribute)
-            // console.log(/\./g.test(customMessageKey) ? `${customMessageKey}.${ruleName}` : ruleName)
-            violationMessage.push(this.messagePlaceholderReplacer(
-              messages[customMessageKey.includes('.') ? `${customMessageKey}.${ruleName}` : ruleName] || ruleInstance.message(),
+            // firstName.required
+            const customMessagePath = `${this.replaceIndexToWildcard(dataAttribute)}.${ruleName}` 
+            const customMessageKeys = Object.keys(messages)
+            let violationMessage: string
+
+            if(customMessageKeys.includes(customMessagePath)) {
+              violationMessage = messages[customMessagePath]
+            } else if(!customMessageKeys.includes(customMessagePath) && customMessageKeys.includes(ruleName)) {
+              violationMessage = messages[ruleName]
+            } else {
+              violationMessage = ruleInstance.message()
+            }
+
+            violationMessages.push(this.messagePlaceholderReplacer(
+              violationMessage,
               this.getCustomAttribute(dataAttribute, attributes),
               parsedData[dataAttribute],
               args
@@ -62,7 +73,7 @@ class Validator {
           }
         }
 
-        if (violationMessage.length > 0) errorMessages[dataAttribute] = violationMessage
+        if (violationMessages.length > 0) errorMessages[dataAttribute] = violationMessages
       }
     }
 
