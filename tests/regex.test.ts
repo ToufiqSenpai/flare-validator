@@ -36,3 +36,9 @@ test('test with chatgpt', () => {
   const regexStr = str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\.(\d+)\./g, '\\.\\d+\\.');
   console.log(regexStr); // Output: "example\\.\\d+\\.example\\.*\\.example"
 })
+
+test('email validation RFC 5322', () => {
+  const emailRegex = /^[-a-z0-9~!$%^&*_=+}{\'?]+(\.[-a-z0-9~!$%^&*_=+}{\'?]+)*@([a-z0-9_][-a-z0-9_]*(\.[-a-z0-9_]+)*\.(aero|arpa|biz|com|coop|edu|gov|info|int|mil|museum|name|net|org|pro|travel|mobi|[a-z][a-z])|([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}))(:[0-9]{1,5})?$/i
+
+  expect(emailRegex.test('john@gmail.com')).toBeTruthy()
+})

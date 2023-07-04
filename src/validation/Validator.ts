@@ -6,6 +6,7 @@ import MinLength from "../rules/MinLength"
 import MaxLength from "../rules/MaxLength"
 import Min from "../rules/Min"
 import Max from "../rules/Max"
+import Email from "../rules/Email"
 
 class Validator {
   /**
@@ -15,6 +16,12 @@ class Validator {
 
   public constructor(ruleValidators: Record<string, RuleValidatorClass> = {}) {
     this.ruleValidators = ruleValidators
+  }
+
+  public addRule(rules: Record<string, RuleValidatorClass>): void {
+    for(const ruleKey in rules) {
+      this.ruleValidators[ruleKey] = rules[ruleKey]
+    }
   }
 
   /**
@@ -148,7 +155,8 @@ class Validator {
         max: Max,
         min_length: MinLength,
         max_length: MaxLength,
-        required: Required
+        required: Required, 
+        email: Email
       })
     }
 
