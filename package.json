@@ -2,9 +2,13 @@
   "name": "flare-validator",
   "version": "1.2.3",
   "description": "Inspired by Laravel Validator",
-  "main": "index.ts",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "type": "commonjs",
   "scripts": {
-    "test": "test"
+    "test": "test",
+    "build:esm": "tsc --project tsconfig.esm.json",
+    "build:cjs": "tsc"
   },
   "author": "FlareSenpai",
   "license": "ISC",

@@ -1,4 +1,4 @@
-function getObjectByPath(o: any, path: string) {
+function getObjectByPath(o: any, path: string): any {
   path = path.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
   path = path.replace(/^\./, '');           // strip a leading dot
 
