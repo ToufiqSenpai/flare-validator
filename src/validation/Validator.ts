@@ -7,6 +7,7 @@ import MaxLength from "../rules/MaxLength"
 import Min from "../rules/Min"
 import Max from "../rules/Max"
 import Email from "../rules/Email"
+import In from "../rules/In"
 
 class Validator {
   /**
@@ -156,7 +157,8 @@ class Validator {
         min_length: MinLength,
         max_length: MaxLength,
         required: Required, 
-        email: Email
+        email: Email,
+        in: In
       })
     }
 
