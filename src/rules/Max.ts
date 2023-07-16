@@ -4,10 +4,10 @@ import RuleValidatorContext from "../validation/RuleValidatorContext";
 class Max implements RuleValidator {
   public context: RuleValidatorContext
 
-  private max: string
+  private max: number
 
   constructor(max: string) {
-    this.max = max
+    this.max = Number.parseInt(max)
   }
 
   public message(): string {
@@ -15,7 +15,8 @@ class Max implements RuleValidator {
   }
   
   public isValid(): boolean | Promise<boolean> {
-    return this.context.getValue() >= this.max
+    const value = this.context.getValue()
+    return typeof value == 'number' && value <= this.max
   }
 }
 

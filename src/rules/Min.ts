@@ -4,10 +4,10 @@ import RuleValidatorContext from "../validation/RuleValidatorContext";
 class Min implements RuleValidator {
   public context: RuleValidatorContext
 
-  private min: string
+  private min: number
 
   constructor(min: string) {
-    this.min = min
+    this.min = Number.parseInt(min)
   }
 
   public message(): string {
@@ -15,7 +15,8 @@ class Min implements RuleValidator {
   }
   
   public isValid(): boolean | Promise<boolean> {
-    return this.context.getValue() >= this.min
+    const value = this.context.getValue()
+    return typeof value == 'number' && value >= this.min
   }
 }
 
