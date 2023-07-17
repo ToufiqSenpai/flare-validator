@@ -15,7 +15,8 @@ class MinLength implements RuleValidator {
   }
   
   public isValid(): boolean | Promise<boolean> {
-    return this.context.getValue()?.length >= this.minLength
+    const value = this.context.getValue()
+    return !value !== (value?.length > this.minLength)
   }
 }
 

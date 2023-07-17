@@ -15,7 +15,8 @@ class MaxLength implements RuleValidator {
   }
   
   public isValid(): boolean | Promise<boolean> {
-    return this.context.getValue()?.length <= this.maxLength
+    const value = this.context.getValue()
+    return !value !== (value?.length < this.maxLength)
   }
 }
 
