@@ -1,3 +1,4 @@
+import RuleValidator from "../interfaces/RuleValidator";
 import ConstraintValidator from "../interfaces/RuleValidator";
 
 export type RuleValidatorClass = new(...args: string[]) => ConstraintValidator
@@ -10,7 +11,23 @@ export type RuleValidatorClass = new(...args: string[]) => ConstraintValidator
 //   constraints?:Record<string, ConstraintValidatorClass>
 // }
 
-export interface ParsedRule {
-  ruleName: string
+export type RulesProp = string | Array<string | RuleValidator>
+
+export interface GetRule {
+  instance: RuleValidator
   args: string[]
+}
+
+export interface ValidatorConstructorParam {
+  data: any
+  rules: RulesProp
+  messages: Record<string, string>
+  attributes: Record<string, string>
+  ruleValidators: RuleValidatorClass
+}
+
+export interface ValidatorMap {
+  name: string
+  args: string[]
+  instance: RuleValidator
 }

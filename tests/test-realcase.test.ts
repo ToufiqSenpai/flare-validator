@@ -8,9 +8,8 @@ describe('Test register user validation', () => {
       email: '',
       password: 'fwewwrgggwegwrherherbebhebrber'
     }
-    const validator = Validator.getValidator()
 
-    const validatorViolation = await validator.validate(data, {
+    const validatorViolation = await Validator.validate(data, {
       name: 'required',
       email: 'required',
       password: 'required|min_length:6|max_length:20'
@@ -19,7 +18,6 @@ describe('Test register user validation', () => {
       email: 'Email',
       password: 'Password'
     })
-    console.log(validatorViolation.getMessageList())
     
     expect(Object.keys(validatorViolation.getMessageList()).length).toBeGreaterThan(0)
   })
@@ -30,16 +28,18 @@ describe('Test register user validation', () => {
       email: 'john@example.com',
       password: 'example'
     }
-    const validator = Validator.getValidator()
-    const violation = await validator.validate(data, {
+
+    const violation = await Validator.validate(data, {
       name: 'required',
-      email: 'required',
+      email: 'required|email',
       password: 'required|min_length:6|max_length:20'
     }, {}, {
       name: 'Name',
       email: 'Email',
       password: 'Password'
     })
+
+    console.log(violation.getMessageList())
     
     expect(Object.keys(violation.getMessageList()).length).toBeFalsy()
   })
@@ -56,15 +56,13 @@ describe('test person validation', () => {
   }
 
   test('success validation', async () => {
-    const validator = Validator.getValidator()
-    const violationMessage = (await validator.validate(person, rule)).getMessageList()
+    const violationMessage = (await Validator.validate(person, rule)).getMessageList()
 
     expect(Object.keys(violationMessage).length).toBeFalsy()
   })
 
   test('failed validation', async () => {
-    const validator = Validator.getValidator()
-    const violationMessage = (await validator.validate({
+    const violationMessage = (await Validator.validate({
       firstName: '',
       lastName: '',
       address: {
@@ -91,7 +89,6 @@ describe('test person validation', () => {
       'books.*.name': 'Book Name',
       'books.*.author': 'Book Author'
     })).getMessageList()
-    console.log(violationMessage)
 
     expect(Object.keys(violationMessage).length).toBeTruthy()
   })

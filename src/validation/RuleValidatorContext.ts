@@ -7,7 +7,7 @@ class RuleValidatorContext {
 
   private attribute: string
 
-  constructor(data: any, value: any, attribute: string) {
+  public constructor(data: any, value: any, attribute: string) {
     this.data = data
     this.value = value
     this.attribute = attribute 
@@ -15,7 +15,7 @@ class RuleValidatorContext {
 
   /**
    * Return the data attribute.
-   * If custom attribute for the data attribute is undefined, it will return path attribute.
+   * If custom attribute for the data attribute is undefined, it will return path of attribute.
    * 
    * @returns {string}
    */
@@ -27,7 +27,7 @@ class RuleValidatorContext {
    * Return data being validated
    * 
    * @param path 
-   * @returns 
+   * @returns {any}
    */
   public getData(path: string = ''): any {
     return getObjectByPath(this.data, path)
@@ -36,7 +36,7 @@ class RuleValidatorContext {
   /**
    * Return value being validated
    * 
-   * @returns 
+   * @returns {any}
    */
   public getValue(): any {
     return this.value
