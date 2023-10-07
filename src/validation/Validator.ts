@@ -7,7 +7,6 @@ import Min from "../rules/Min"
 import Max from "../rules/Max"
 import Email from "../rules/Email"
 import In from "../rules/In"
-import RuleValidator from "../interfaces/RuleValidator"
 import RuleValidatorContext from "./RuleValidatorContext"
 
 class Validator {
@@ -166,7 +165,7 @@ class Validator {
     rules: Record<string, RulesProp>, 
     messages: Record<string, string> = {},
     attributes: Record<string, string> = {},
-    customValidators: Record<string, RuleValidator> = {}
+    customValidators: Record<string, RuleValidatorClass> = {}
   ): Promise<RuleViolation> {
     const nativeValidators = {
       required: Required,
