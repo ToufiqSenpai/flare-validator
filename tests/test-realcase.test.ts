@@ -9,7 +9,7 @@ describe('Test register user validation', () => {
       password: 'fwewwrgggwegwrherherbebhebrber'
     }
 
-    const validatorViolation = await Validator.validate(data, {
+    const validatorViolation = await Validator.validate({}, {
       name: 'required',
       email: 'required',
       password: 'required|min_length:6|max_length:20'
@@ -38,8 +38,6 @@ describe('Test register user validation', () => {
       email: 'Email',
       password: 'Password'
     })
-
-    console.log(violation.getMessageList())
     
     expect(Object.keys(violation.getMessageList()).length).toBeFalsy()
   })

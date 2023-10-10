@@ -11,7 +11,7 @@ class MinLength implements RuleValidator {
   }
 
   public message(): string {
-    return `Min :attribute character length is :arg1`
+    return `Min ${this.context.getAttribute()} character length is ${this.minLength}`
   }
   
   public isValid(): boolean | Promise<boolean> {

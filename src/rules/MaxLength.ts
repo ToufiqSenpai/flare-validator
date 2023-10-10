@@ -11,7 +11,7 @@ class MaxLength implements RuleValidator {
   }
 
   public message(): string {
-    return `Max :attribute character length is :arg1`
+    return `Max ${this.context.getAttribute()} character length is ${this.maxLength}`
   }
   
   public isValid(): boolean | Promise<boolean> {

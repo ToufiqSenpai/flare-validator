@@ -68,7 +68,13 @@ class Validator {
     const parsedData = this.parseData(this.data)
 
     for (const validatorKey of this.validators.keys()) {
-      const dataAttributes = Object.keys(parsedData).filter(key => this.createWildcardRegex(validatorKey).test(key))
+      let dataAttributes: string[]
+
+      if(validatorKey.match(/\.\*\./)) {
+        dataAttributes = Object.keys(parsedData).filter(key => this.createWildcardRegex(validatorKey).test(key))
+      } else {
+        dataAttributes = [validatorKey]
+      }
 
       for(const dataAttribute of dataAttributes) {
         const violationMessages: string[] = []

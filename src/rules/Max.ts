@@ -11,7 +11,7 @@ class Max implements RuleValidator {
   }
 
   public message(): string {
-    return `Max :attribute value is :arg1`
+    return `Max ${this.context.getAttribute()} value is ${this.max}`
   }
   
   public isValid(): boolean | Promise<boolean> {

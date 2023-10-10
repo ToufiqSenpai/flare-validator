@@ -11,7 +11,7 @@ class Min implements RuleValidator {
   }
 
   public message(): string {
-    return `Min :attribute value is :arg1`
+    return `Min ${this.context.getAttribute()} value is ${this.min}`
   }
   
   public isValid(): boolean | Promise<boolean> {
